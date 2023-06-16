@@ -38,15 +38,19 @@ impl Cargo {
 
         Ok(self.amount)
     }
+
+    pub fn split_cargo(&mut self, amount: isize) -> Result<Cargo> {
+        self.decrease_amount(amount)?;
+
+        Ok(Cargo::new(amount, self.get_cargo_type()))
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use std::assert_eq;
-
+    use super::*;
     use crate::cargo::cargo_type::CargoType;
-
-    use super::Cargo;
+    use std::assert_eq;
 
     #[test]
     fn decrease_below_zero_test() {
@@ -71,5 +75,23 @@ mod test {
         let result = cargo.increase_amount(40);
 
         assert_eq!(result, 90);
+    }
+
+    #[test]
+    fn split_cargo_test() {
+        let mut cargo = Cargo::new(50, CargoType::Wood);
+        let split_cargo = cargo.split_cargo(25);
+
+        assert!(split_cargo.is_ok());
+        assert_eq!(25, split_cargo.unwrap().amount);
+        assert_eq!(25, cargo.amount);
+    }
+
+    #[test]
+    fn split_cargo_err_test() {
+        let mut cargo = Cargo::new(50, CargoType::Wood);
+        let split_cargo = cargo.split_cargo(100);
+
+        assert!(split_cargo.is_err());
     }
 }

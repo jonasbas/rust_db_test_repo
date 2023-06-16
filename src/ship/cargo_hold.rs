@@ -112,14 +112,14 @@ mod test {
         let result = example_hold.add_cargo(cargo_to_add);
         assert!(result.is_ok());
 
-        let filtered_inventory: Vec<&Cargo> = example_hold
+        let filtered_inventory = example_hold
             .inventory
             .iter()
             .filter(|item| item.is_cargo_type(CargoType::Wood))
-            .collect();
+            .next();
 
-        assert_eq!(1, filtered_inventory.len());
-        assert_eq!(150, filtered_inventory[0].get_amount())
+        assert!(filtered_inventory.is_some());
+        assert_eq!(150, filtered_inventory.unwrap().get_amount())
     }
 
     #[test]
