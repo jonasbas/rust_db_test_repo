@@ -1,5 +1,5 @@
 [package]
-name = "pirate_game"
+name = "api_trading_game"
 version = "0.1.0"
 edition = "2021"
 
