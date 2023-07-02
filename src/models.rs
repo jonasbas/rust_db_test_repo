@@ -9,3 +9,10 @@ pub struct Post {
     pub body: String,
     pub published: bool,
 }
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::posts)]
+pub struct NewPost {
+    pub title: String,
+    pub body: String,
+}

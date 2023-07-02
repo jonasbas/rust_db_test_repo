@@ -1,30 +1,51 @@
 #![allow(dead_code)]
-use std::env;
+use std::{
+    env,
+    io::{stdin, Read},
+};
 
 // use axum::{extract::Path, routing::get, Extension, Router};
 use diesel::prelude::*;
 use dotenv::dotenv;
 // use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
-use crate::models::Post;
+use crate::models::{NewPost, Post};
+
+const EOF: &str = "CTRL+Z";
 
 fn main() {
-    use self::schema::posts::dsl::*;
+    // use self::schema::posts::dsl::*;
 
     let connection = &mut establish_connection();
-    let results = posts
-        .filter(published.eq(true))
-        .limit(5)
-        .select(Post::as_select())
-        .load(connection)
-        .expect("error");
 
-    println!("Displaying {} posts", results.len());
+    let mut title = String::new();
+    let mut body = String::new();
 
-    for post in results {
-        println!("{}", post.title);
-        println!("{}", post.body);
-    }
+    println!("What would you like your title to be?");
+    stdin().read_line(&mut title).unwrap();
+    let title = title.trim_end(); // Remove the trailing newline
+
+    println!(
+        "\nOk! Let's write {} (Press {} when finished)\n",
+        title, EOF
+    );
+    stdin().read_to_string(&mut body).unwrap();
+
+    let post = create_post(connection, title.to_owned(), body.to_owned());
+    println!("\nSaved draft {} with id {}", title, post.id);
+    // let results = posts
+    //     .filter(published.eq(true))
+    //     .limit(5)
+    //     .select(Post::as_select())
+    //     .load(connection)
+    //     .expect("error");
+    //
+    // println!("Displaying {} posts", results.len());
+    //
+    // for post in results {
+    //     println!("{}", post.title);
+    //     println!("{}", post.body);
+    // }
 }
 
 fn establish_connection() -> PgConnection {
@@ -33,6 +54,18 @@ fn establish_connection() -> PgConnection {
     let database_url = env::var("DATABASE_URL").expect("DATABASE URL must be set");
     PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+}
+
+fn create_post(conn: &mut PgConnection, title: String, body: String) -> Post {
+    use crate::schema::posts;
+
+    let new_post = NewPost { title, body };
+
+    diesel::insert_into(posts::table)
+        .values(&new_post)
+        .returning(Post::as_returning())
+        .get_result(conn)
+        .expect("Error")
 }
 
 pub mod models;
